@@ -7,6 +7,20 @@ app.use(express.json());
 const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const SHOPIFY_SECRET = process.env.SHOPIFY_SECRET;
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+
+// Verificación del webhook de Meta
+app.get('/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    res.status(200).send(challenge);
+  } else {
+    res.status(403).send('Forbidden');
+  }
+});
 
 function verifyShopify(req) {
   const hmac = req.headers['x-shopify-hmac-sha256'];
@@ -31,7 +45,6 @@ app.post('/webhook', async (req, res) => {
     return res.status(200).send('No phone number');
   }
 
-  // Limpiar número: quitar +, espacios, guiones
   const cleanPhone = phone.replace(/[^0-9]/g, '');
 
   try {
